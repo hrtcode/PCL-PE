@@ -189,7 +189,10 @@ Public Class PageInstanceOverall
     Private Sub BtnFolderSaves_Click() Handles BtnFolderSaves.Click
         Dim Folder As String = PageInstanceLeft.Instance.PathIndie & "saves\"
         DirectoryUtils.Create(Folder)
-        OpenExplorer(Folder)
+        'PCLPE：改为打开存档浏览窗口
+        Dim Saves = ModSaves.ScanSaves(Folder)
+        Dim Dialog As New MyMsgSaves(Saves, PageInstanceLeft.Instance.Name)
+        Dialog.ShowDialog()
     End Sub
 
     'Mod 文件夹

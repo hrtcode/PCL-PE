@@ -412,6 +412,23 @@ Public Class FormMain
         TimerMainStart()
         'PCLPE：启动后静默检查 GitHub 更新（每天最多一次）
         ModUpdate.AutoCheckUpdate()
+        'PCLPE：调试用，设置环境变量 PCLPE_SHOW_SAVES=<saves 文件夹> 时直接打开存档浏览
+        Dim ShowSaves As String = Environment.GetEnvironmentVariable("PCLPE_SHOW_SAVES")
+        If Not String.IsNullOrEmpty(ShowSaves) Then
+            Dim SavesTimer As New System.Windows.Threading.DispatcherTimer With {.Interval = New TimeSpan(0, 0, 0, 5)}
+            AddHandler SavesTimer.Tick,
+            Sub(senderSv, eSv)
+                CType(senderSv, System.Windows.Threading.DispatcherTimer).Stop()
+                Try
+                    Dim Saves = ModSaves.ScanSaves(ShowSaves)
+                    Dim Dialog As New MyMsgSaves(Saves, "调试实例")
+                    Dialog.ShowDialog()
+                Catch ex As Exception
+                    Logger.Error(ex, "[Saves] 打开存档浏览失败")
+                End Try
+            End Sub
+            SavesTimer.Start()
+        End If
         'PCLPE：调试用，设置环境变量 PCLPE_DATAPACK=<zip 路径> 时解析并安装到第一个存档
         Dim DataPackPath As String = Environment.GetEnvironmentVariable("PCLPE_DATAPACK")
         If Not String.IsNullOrEmpty(DataPackPath) Then
