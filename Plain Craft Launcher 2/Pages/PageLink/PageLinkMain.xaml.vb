@@ -91,9 +91,19 @@ Public Class PageLinkMain
     '  页面 UI
     '===============================
 
+    'PCLPE：调试用，跳过输入端口弹窗直接创建房间
+    Public Sub DebugCreateRoom(Port As Integer)
+        IsServerSide = True
+        ServerPort = Port
+        NetworkName = $"P{Port.ConvertRadix(16).PadLeft(4, "0"c)}-DBG01"
+        NetworkSecret = "DBG01"
+        DiscoverNodeID = -1
+        Logger.Info($"[Link] 调试创建房间，端口 {Port}，网络 {NetworkName}")
+        ChangeState(LinkStates.Loading)
+    End Sub
+
     '创建
-    Private Sub Create_MouseLeftButtonUp() Handles PanSelectCreate.MouseLeftButtonUp
-        '输入端口号
+    Private Sub Create_MouseLeftButtonUp() Handles PanSelectCreate.MouseLeftButtonUp        '输入端口号
         Dim Port As String = MyMsgBoxInput("输入端口", $"在单人游戏的暂停菜单选择 {vbLQ}对局域网开放{vbRQ}，然后输入端口数字。{vbCrLf}甚至可以输入其他游戏的端口……嗯……",
             ValidateRules:=New Collection(Of Validate) From {New ValidateInteger(1024, 65535)},
             HintText:="端口号")
@@ -425,20 +435,38 @@ Public Class PageLinkMain
 
     '1. 获取服务器配置
     Private Sub InitConfig(Task As LoaderTask(Of Integer, Integer))
-        UpdateLoadingPage("正在联网获取配置……", "联网获取配置")
-        If VersionBranchMain <> "Official" Then
-            Throw New Exception($"$开源版无法联网获取配置。{vbCrLf}你可以在 PCL 官方版的缓存文件夹下查看 ServerConfig 的当前内容， 并在代码中进行相应修改。")
-        End If
-        ServerLoader.WaitForExit(LoaderToSyncProgress:=Task)
-        If ServerConfig Is Nothing Then Throw New Exception("无法从服务器获取配置")
-        '检查是否已禁用联机功能
+        UpdateLoadingPage("正在准备联机配置……", "准备联机配置")
+        'PCLPE：开源版拿不到服务器配置，这里使用内置配置。
+        'EasyTier 使用官方 Release 的 Windows 包，--no-tun 模式下无需管理员权限。
+        ServerConfig = New JObject From {
+            {"Link", New JObject From {
+                {"EasyTierVersion", LinkEasyTierVersion},
+                {"Argument", "--no-tun"},
+                {"Downloads", New JArray(LinkEasyTierDownloadUrl)},
+                {"DiscoverPeerId", 0},
+                {"DiscoverPeer", LinkEasyTierDiscoverPeer},
+                {"PeersBlackList", New JArray()},
+                {"Peers", New JArray()},
+                {"RandomPeer", 0},
+                {"MandatoryPeers", New JArray()}
+            }}
+        }
         Dim DisableReason = ServerConfig("Link")?("DisableReason2")?.ToString
-        If Not String.IsNullOrEmpty(DisableReason) Then Throw New Exception("$" & DisableReason) 'TODO: 可能不会显示错误原因？
-        If CType(ServerConfig("Link"), JObject).ContainsKey("MinVersionCode") AndAlso
-           VersionCode < ServerConfig("Link")("MinVersionCode").ToObject(Of Integer) Then
-            Throw New Exception("$你的 PCL 版本太老了，请在更新 PCL 之后再联机！")
-        End If
+        If Not String.IsNullOrEmpty(DisableReason) Then Throw New Exception("$" & DisableReason)
     End Sub
+
+    ''' <summary>
+    ''' PCLPE 内置的联机模块版本号（随 EasyTier 版本变化，改了就会重新下载）。
+    ''' </summary>
+    Private Const LinkEasyTierVersion As Integer = 20604
+    ''' <summary>
+    ''' PCLPE 内置的联机模块下载地址，{arch} 会被替换成 x86_64 / i686 / arm64。
+    ''' </summary>
+    Private Const LinkEasyTierDownloadUrl As String = "https://github.com/EasyTier/EasyTier/releases/download/v2.6.4/easytier-windows-{arch}-v2.6.4.zip"
+    ''' <summary>
+    ''' 节点列表接口不可用时使用的公共发现节点。
+    ''' </summary>
+    Private Const LinkEasyTierDiscoverPeer As String = "tcp://public.easytier.cn:11010"
 
     '2. 获取需要下载的文件
     Private ServerVersion As Integer
@@ -487,8 +515,8 @@ Public Class PageLinkMain
         If FileUtils.Exists(PathEasyTier & "EasyTier.zip") Then
             '解压
             Dim ExtractPath As String = RequestTaskTempFolder()
-            'FileUtils.ExtractToDirectory(PathEasyTier & "EasyTier.zip", ExtractPath,
-            '    progressHandler:=Sub(Percentage) Task.Progress = Percentage * 0.05)
+            FileUtils.ExtractToDirectory(PathEasyTier & "EasyTier.zip", ExtractPath)
+            Task.Progress = 0.05
             DirectoryUtils.Copy(DirectoryUtils.EnumerateDirectories(ExtractPath, True).First, PathEasyTier)
             '重命名
             FileUtils.Move(PathEasyTier & "easytier-core.exe", PathEasyTier & "联机模块.exe")

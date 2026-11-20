@@ -412,6 +412,30 @@ Public Class FormMain
         TimerMainStart()
         'PCLPE：启动后静默检查 GitHub 更新（每天最多一次）
         ModUpdate.AutoCheckUpdate()
+        'PCLPE：调试用，设置环境变量 PCLPE_LINK_ROOM=端口 时直达联机页并创建房间
+        Dim LinkPort As String = Environment.GetEnvironmentVariable("PCLPE_LINK_ROOM")
+        If Not String.IsNullOrEmpty(LinkPort) Then
+            Dim LinkTimer As New System.Windows.Threading.DispatcherTimer With {.Interval = New TimeSpan(0, 0, 0, 6)}
+            AddHandler LinkTimer.Tick,
+            Sub(senderLnk, eLnk)
+                CType(senderLnk, System.Windows.Threading.DispatcherTimer).Stop()
+                Try
+                    PageChange(PageType.Link)
+                    Dim LinkWait As New System.Windows.Threading.DispatcherTimer With {.Interval = New TimeSpan(0, 0, 0, 2)}
+                    AddHandler LinkWait.Tick,
+                    Sub(senderWait, eWait)
+                        CType(senderWait, System.Windows.Threading.DispatcherTimer).Stop()
+                        RunInUi(Sub()
+                                    If FrmLinkMain IsNot Nothing Then FrmLinkMain.DebugCreateRoom(CInt(LinkPort))
+                                End Sub, True)
+                    End Sub
+                    LinkWait.Start()
+                Catch ex As Exception
+                    Logger.Error(ex, "[Link] 调试创建房间失败")
+                End Try
+            End Sub
+            LinkTimer.Start()
+        End If
         If Environment.GetEnvironmentVariable("PCLPE_CHECK_UPDATE") IsNot Nothing Then
             Dim UpdateTimer As New System.Windows.Threading.DispatcherTimer With {.Interval = New TimeSpan(0, 0, 0, 5)}
             AddHandler UpdateTimer.Tick,
