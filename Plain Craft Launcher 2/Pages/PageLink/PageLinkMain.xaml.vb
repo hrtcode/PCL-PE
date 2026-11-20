@@ -448,7 +448,7 @@ Public Class PageLinkMain
                 {"PeersBlackList", New JArray()},
                 {"Peers", New JArray()},
                 {"RandomPeer", 0},
-                {"MandatoryPeers", New JArray()}
+                {"MandatoryPeers", LinkEasyTierPeers}
             }}
         }
         Dim DisableReason = ServerConfig("Link")?("DisableReason2")?.ToString
@@ -466,7 +466,15 @@ Public Class PageLinkMain
     ''' <summary>
     ''' 节点列表接口不可用时使用的公共发现节点。
     ''' </summary>
-    Private Const LinkEasyTierDiscoverPeer As String = "tcp://public.easytier.cn:11010"
+    Private Const LinkEasyTierDiscoverPeer As String = "tcp://mc1.easytier.cn:55558"
+    ''' <summary>
+    ''' 一并尝试的公共中继节点（官方老节点已失效，这里是仍能解析的社区节点）。
+    ''' </summary>
+    Private ReadOnly LinkEasyTierPeers As New JArray(
+        "tcp://mc1.easytier.cn:55558",
+        "tcp://easytier-us.slarker.me:11010",
+        "tcp://161.33.207.13:51010",
+        "tcp://38.147.105.178:11010")
 
     '2. 获取需要下载的文件
     Private ServerVersion As Integer
