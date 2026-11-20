@@ -412,6 +412,30 @@ Public Class FormMain
         TimerMainStart()
         'PCLPE：启动后静默检查 GitHub 更新（每天最多一次）
         ModUpdate.AutoCheckUpdate()
+        'PCLPE：调试用，设置环境变量 PCLPE_DATAPACK=<zip 路径> 时解析并安装到第一个存档
+        Dim DataPackPath As String = Environment.GetEnvironmentVariable("PCLPE_DATAPACK")
+        If Not String.IsNullOrEmpty(DataPackPath) Then
+            Dim DataPackTimer As New System.Windows.Threading.DispatcherTimer With {.Interval = New TimeSpan(0, 0, 0, 5)}
+            AddHandler DataPackTimer.Tick,
+            Sub(senderDp, eDp)
+                CType(senderDp, System.Windows.Threading.DispatcherTimer).Stop()
+                Try
+                    ModDataPack.DebugPrintDataPack(DataPackPath)
+                    Dim SavesFolder As String = Environment.GetEnvironmentVariable("PCLPE_SAVES_DIR")
+                    If String.IsNullOrEmpty(SavesFolder) Then SavesFolder = ModSaves.GetSavesFolder()
+                    Dim Saves = ModSaves.ScanSaves(SavesFolder)
+                    If Saves.Count = 0 Then
+                        Logger.Warn("[DataPack] 没有可用存档，跳过安装")
+                        Return
+                    End If
+                    Dim Target = ModDataPack.InstallToSave(DataPackPath, Saves(0))
+                    Logger.Info($"[DataPack] 安装结果：{Target}")
+                Catch ex As Exception
+                    Logger.Error(ex, "[DataPack] 安装失败")
+                End Try
+            End Sub
+            DataPackTimer.Start()
+        End If
         'PCLPE：调试用，设置环境变量 PCLPE_LINK_ROOM=端口 时直达联机页并创建房间
         Dim LinkPort As String = Environment.GetEnvironmentVariable("PCLPE_LINK_ROOM")
         If Not String.IsNullOrEmpty(LinkPort) Then
