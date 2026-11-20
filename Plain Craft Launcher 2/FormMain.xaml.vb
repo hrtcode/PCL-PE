@@ -420,7 +420,8 @@ Public Class FormMain
             Sub(senderDp, eDp)
                 CType(senderDp, System.Windows.Threading.DispatcherTimer).Stop()
                 Try
-                    ModDataPack.DebugPrintDataPack(DataPackPath)
+                    ModDataPack.InstallDataPackFlow(DataPackPath)
+                    Return
                     Dim SavesFolder As String = Environment.GetEnvironmentVariable("PCLPE_SAVES_DIR")
                     If String.IsNullOrEmpty(SavesFolder) Then SavesFolder = ModSaves.GetSavesFolder()
                     Dim Saves = ModSaves.ScanSaves(SavesFolder)
@@ -1059,6 +1060,18 @@ Public Class FormMain
     Private Sub FrmMain_Drop(sender As Object, e As DragEventArgs) Handles Me.Drop
         Try
             ShowWindowToTop()
+            'PCLPE：拖入数据包 zip 时，走"选存档 → 安装"流程
+            If e.Data.GetDataPresent(DataFormats.FileDrop) Then
+                Dim DroppedFiles As String() = TryCast(e.Data.GetData(DataFormats.FileDrop), String())
+                If DroppedFiles IsNot Nothing AndAlso DroppedFiles.Length = 1 AndAlso
+                   DroppedFiles(0).EndsWith(".zip", StringComparison.OrdinalIgnoreCase) AndAlso
+                   ModDataPack.IsDataPack(DroppedFiles(0)) Then
+                    e.Handled = True
+                    e.Effects = DragDropEffects.Copy
+                    ModDataPack.InstallDataPackFlow(DroppedFiles(0))
+                    Return
+                End If
+            End If
             If e.Data.GetDataPresent(DataFormats.Text) Then
                 '获取文本
                 Try

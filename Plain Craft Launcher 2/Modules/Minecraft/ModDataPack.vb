@@ -138,6 +138,41 @@ Public Module ModDataPack
     End Function
 
     ''' <summary>
+    ''' 完整的"一键安装数据包"流程：识别 → 选存档 → 安装。
+    ''' 从拖拽或菜单调用，必须在 UI 线程执行。
+    ''' </summary>
+    Public Sub InstallDataPackFlow(ZipPath As String)
+        If Not File.Exists(ZipPath) Then
+            Hint($"找不到文件：{ZipPath}", HintType.Red)
+            Return
+        End If
+        If Not IsDataPack(ZipPath) Then
+            Hint("这个压缩包里没有 pack.mcmeta 或 data 文件夹，看起来不是数据包。", HintType.Red)
+            Return
+        End If
+        Dim Info = ReadDataPack(ZipPath)
+        Dim SavesFolder = If(Environment.GetEnvironmentVariable("PCLPE_SAVES_DIR"), ModSaves.GetSavesFolder())
+        Dim Saves = ModSaves.ScanSaves(SavesFolder)
+        If Saves.Count = 0 Then
+            Hint("没有找到任何存档。请先启动一次游戏，让存档目录生成。", HintType.Red)
+            Return
+        End If
+        '构建存档选择列表
+        Dim Items As New List(Of IMyRadio)
+        For Each Save In Saves
+            Dim VersionText As String = If(String.IsNullOrEmpty(Save.VersionName), "未知版本", Save.VersionName)
+            Dim Box As New MyRadioBox With {.Text = $"{Save.Name}（{VersionText} · 已有 {Save.DataPackCount} 个数据包）"}
+            Items.Add(Box)
+        Next
+        Dim Title As String = $"数据包「{Info.Name}」适用于 {Info.VersionHint}，装到哪个存档？"
+        Dim Selected As Integer? = MyMsgBoxSelect(Items, Title, "安装", "取消")
+        If Selected Is Nothing Then Return
+        Dim TargetSave = Saves(Selected.Value)
+        Dim TargetFile = InstallToSave(ZipPath, TargetSave)
+        Hint($"已安装到「{TargetSave.Name}」：{Path.GetFileName(TargetFile)}")
+    End Sub
+
+    ''' <summary>
     ''' 调试用：打印一个数据包的解析结果。
     ''' </summary>
     Public Sub DebugPrintDataPack(ZipPath As String)
