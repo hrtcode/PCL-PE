@@ -412,6 +412,21 @@ Public Class FormMain
         TimerMainStart()
         'PCLPE：启动后静默检查 GitHub 更新（每天最多一次）
         ModUpdate.AutoCheckUpdate()
+        'PCLPE：调试用，设置环境变量 PCLPE_SHOW_SKINS=1 时直接打开皮肤库
+        If Environment.GetEnvironmentVariable("PCLPE_SHOW_SKINS") IsNot Nothing Then
+            Dim SkinTimer As New System.Windows.Threading.DispatcherTimer With {.Interval = New TimeSpan(0, 0, 0, 5)}
+            AddHandler SkinTimer.Tick,
+            Sub(senderSk, eSk)
+                CType(senderSk, System.Windows.Threading.DispatcherTimer).Stop()
+                Try
+                    Dim Dialog As New MyMsgSkins()
+                    Dialog.ShowDialog()
+                Catch ex As Exception
+                    Logger.Error(ex, "[Skins] 打开皮肤库失败")
+                End Try
+            End Sub
+            SkinTimer.Start()
+        End If
         'PCLPE：调试用，设置环境变量 PCLPE_SHOW_SAVES=<saves 文件夹> 时直接打开存档浏览
         Dim ShowSaves As String = Environment.GetEnvironmentVariable("PCLPE_SHOW_SAVES")
         If Not String.IsNullOrEmpty(ShowSaves) Then

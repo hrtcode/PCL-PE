@@ -152,7 +152,7 @@ RetryCacheCheck:
         If BuildType = BuildTypes.Debug Then Return
         Try
             Dim MutexCreatedNew As Boolean
-            PclMutex = New Mutex(True, "PCL_SingletonMutex", MutexCreatedNew)
+            PclMutex = New Mutex(True, "PCLPE_SingletonMutex", MutexCreatedNew) 'PCLPE：与官方 PCL 使用不同的互斥量，两者可以同时运行
             If MutexCreatedNew Then Return
             Logger.Warn("已有一个 PCL 实例正在运行")
             '等待已有的 PCL 退出

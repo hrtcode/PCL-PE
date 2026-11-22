@@ -1,5 +1,14 @@
 Public Class PageSetupUI
 
+    'PCLPE：打开皮肤库
+    Private Sub BtnSkinLibrary_Click() Handles BtnSkinLibrary.Click
+        Try
+            Dim Dialog As New MyMsgSkins()
+            Dialog.ShowDialog()
+        Catch ex As Exception
+            Logger.Error(ex, "打开皮肤库失败", LogBehavior.Toast)
+        End Try
+    End Sub
     Private Sub PageSetupUI_Loaded(sender As Object, e As RoutedEventArgs) Handles Me.Loaded
         '重复加载部分
         PanBack.ScrollToHome()

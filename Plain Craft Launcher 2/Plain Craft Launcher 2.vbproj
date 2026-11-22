@@ -340,6 +340,7 @@
     <Compile Include="Modules\Minecraft\ModSaves.vb" />
     <Compile Include="Modules\Minecraft\ModDataPack.vb" />
     <Compile Include="Controls\MyMsg\MyMsgSaves.vb" />
+    <Compile Include="Controls\MyMsg\MyMsgSkins.vb" />
     <Compile Include="Pages\PageOther\PageOtherTest.xaml.vb">
       <DependentUpon>PageOtherTest.xaml</DependentUpon>
     </Compile>

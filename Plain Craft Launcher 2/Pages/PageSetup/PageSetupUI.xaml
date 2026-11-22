@@ -101,7 +101,17 @@
                     </Border>
                 </Grid>
             </local:MyCard>
-            <local:MyCard x:Name="CardBackground" Margin="0,0,0,15" Title="背景图片">
+            <local:MyCard x:Name="CardSkinLibrary" Margin="0,0,0,15" Title="皮肤库">
+            <Grid Margin="25,40,19,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="把 64×64 的皮肤 PNG 收集起来，随时查看；点「导入皮肤」把文件加进库。" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource ColorBrushGray3}" Margin="0,0,15,0" />
+                <local:MyButton Grid.Column="1" x:Name="BtnSkinLibrary" Text="打开皮肤库" Height="30" MinWidth="100" VerticalAlignment="Center" />
+            </Grid>
+        </local:MyCard>
+        <local:MyCard x:Name="CardBackground" Margin="0,0,0,15" Title="背景图片">
                 <StackPanel Margin="25,40,25,20">
                     <Grid x:Name="PanBackgroundSuit" Height="28" Margin="0,0,0,10" Visibility="Collapsed">
                         <Grid.ColumnDefinitions>
