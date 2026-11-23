@@ -4,6 +4,7 @@
     xmlns:local="clr-namespace:PCL" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     mc:Ignorable="d" x:Class="PageDownloadDataPack"
     PanScroll="Content">
+        <Grid>
     <local:PageResource x:Name="Content" PageType="DataPack" TypeName="数据包" TypeNameSpaced="数据包">
         <local:MyComboBoxItem Tag="" Content="全部" IsSelected="True" />
         <local:MyComboBoxItem Content="世界元素" Tag="/worldgen" />
@@ -23,4 +24,7 @@
         <local:MyComboBoxItem Content="支持库" Tag="6950/library" />
         <local:MyComboBoxItem Content="Mod 相关" Tag="6946/" />
     </local:PageResource>
+        <local:MyButton x:Name="BtnLocalInstall" Text="安装本地数据包" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Margin="0,0,30,20" Height="32" MinWidth="130" />
+    </Grid>
 </local:MyPageRight>

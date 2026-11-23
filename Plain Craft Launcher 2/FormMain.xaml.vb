@@ -527,6 +527,7 @@ Public Class FormMain
                     Try
                         Select Case ShotPage
                             Case "Download" : PageChange(PageType.Download, PageSubType.DownloadInstall)
+                            Case "DataPack" : PageChange(PageType.Download, PageSubType.DownloadDataPack)
                             Case "Link" : PageChange(PageType.Link)
                             Case "Setup" : PageChange(PageType.Setup)
                             Case "Select" : PageChange(PageType.InstanceSelect)

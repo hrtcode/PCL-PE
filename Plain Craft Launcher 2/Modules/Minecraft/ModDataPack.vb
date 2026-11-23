@@ -138,8 +138,38 @@ Public Module ModDataPack
     End Function
 
     ''' <summary>
-    ''' 完整的"一键安装数据包"流程：识别 → 选存档 → 安装。
-    ''' 从拖拽或菜单调用，必须在 UI 线程执行。
+    ''' 从"数据包"页面发起的本地安装：选文件 → 选版本 → 选存档。
+    ''' </summary>
+    Public Sub StartLocalInstall()
+        Dim File = Dialogs.SelectFile("选择数据包文件", False, filter:={({"zip"}, "数据包压缩包")}).FirstOrDefault()
+        If String.IsNullOrEmpty(File) Then Return
+        InstallDataPackFlow(File)
+    End Sub
+
+    ''' <summary>
+    ''' 可选的 MC 实例列表（已排除读取失败的版本）。
+    ''' </summary>
+    Private Function GetInstanceChoices() As List(Of McInstance)
+        Try
+            If McInstanceList Is Nothing OrElse Not McInstanceList.Any(Function(kv) kv.Value IsNot Nothing AndAlso kv.Value.Any) Then
+                McInstanceListLoader.Start(Nothing)
+                McInstanceListLoader.WaitForExit()
+            End If
+            If McInstanceList Is Nothing Then Return New List(Of McInstance)
+            Return McInstanceList.Values.
+                Where(Function(l) l IsNot Nothing).
+                SelectMany(Function(l) l).
+                Where(Function(i) i IsNot Nothing AndAlso i.State <> McInstance.McInstanceState.Error).
+                OrderBy(Function(i) i.Name).
+                ToList()
+        Catch ex As Exception
+            Logger.Warn(ex, "获取版本列表失败")
+            Return New List(Of McInstance)
+        End Try
+    End Function
+
+    ''' <summary>
+    ''' 完整的"一键安装数据包"流程：识别 → 选版本 → 选存档 → 安装。
     ''' </summary>
     Public Sub InstallDataPackFlow(ZipPath As String)
         If Not File.Exists(ZipPath) Then
@@ -151,10 +181,27 @@ Public Module ModDataPack
             Return
         End If
         Dim Info = ReadDataPack(ZipPath)
-        Dim SavesFolder = If(Environment.GetEnvironmentVariable("PCLPE_SAVES_DIR"), ModSaves.GetSavesFolder())
+
+        '先选版本
+        Dim Instances = GetInstanceChoices()
+        If Instances.Count = 0 Then
+            Hint("没有找到任何 Minecraft 版本，请先在「下载」页安装一个版本。", HintType.Red)
+            Return
+        End If
+        Dim InstanceItems As New List(Of IMyRadio)
+        For Each Instance In Instances
+            InstanceItems.Add(New MyRadioBox With {.Text = $"{Instance.Name}（{Instance.State}）"})
+        Next
+        Dim InstanceIndex As Integer? = MyMsgBoxSelect(InstanceItems,
+            $"数据包「{Info.Name}」适用于 {Info.VersionHint}，装到哪个版本？", "下一步", "取消")
+        If InstanceIndex Is Nothing Then Return
+        Dim TargetInstance = Instances(InstanceIndex.Value)
+
+        '再选存档
+        Dim SavesFolder As String = TargetInstance.PathIndie & "saves\"
         Dim Saves = ModSaves.ScanSaves(SavesFolder)
         If Saves.Count = 0 Then
-            Hint("没有找到任何存档。请先启动一次游戏，让存档目录生成。", HintType.Red)
+            Hint($"「{TargetInstance.Name}」还没有存档。请先启动一次游戏并创建世界。", HintType.Red)
             Return
         End If
         '构建存档选择列表
@@ -164,7 +211,7 @@ Public Module ModDataPack
             Dim Box As New MyRadioBox With {.Text = $"{Save.Name}（{VersionText} · 已有 {Save.DataPackCount} 个数据包）"}
             Items.Add(Box)
         Next
-        Dim Title As String = $"数据包「{Info.Name}」适用于 {Info.VersionHint}，装到哪个存档？"
+        Dim Title As String = $"装到「{TargetInstance.Name}」的哪个存档？"
         Dim Selected As Integer? = MyMsgBoxSelect(Items, Title, "安装", "取消")
         If Selected Is Nothing Then Return
         Dim TargetSave = Saves(Selected.Value)
