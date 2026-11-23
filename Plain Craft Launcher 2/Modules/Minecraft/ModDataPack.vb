@@ -151,8 +151,10 @@ Public Module ModDataPack
     ''' </summary>
     Private Function GetInstanceChoices() As List(Of McInstance)
         Try
+            Dim PathMc As String = McFolderSelected
+            If String.IsNullOrEmpty(PathMc) Then Return New List(Of McInstance)
             If McInstanceList Is Nothing OrElse Not McInstanceList.Any(Function(kv) kv.Value IsNot Nothing AndAlso kv.Value.Any) Then
-                McInstanceListLoader.Start(Nothing)
+                McInstanceListLoader.Start(PathMc)
                 McInstanceListLoader.WaitForExit()
             End If
             If McInstanceList Is Nothing Then Return New List(Of McInstance)

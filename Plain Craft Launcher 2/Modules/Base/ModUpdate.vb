@@ -24,7 +24,7 @@ Public Module ModUpdate
     ''' PCLPE 自己的版本号。与 GitHub Release 的 tag 比较（tag 可带 v 前缀，如 v1.2.0）。
     ''' 发版时记得同步改这里。
     ''' </summary>
-    Public Const PeVersion As String = "1.0.5"
+    Public Const PeVersion As String = "1.0.6"
 
     ''' <summary>
     ''' 检查更新。Manual 为 True 时用户主动点击，会在没有更新/没配置仓库时给出提示。

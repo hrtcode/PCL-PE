@@ -76,6 +76,20 @@ Public Class PageResource
     '在点击 MyResourceItem 时会获取 Loader 的输入，以使资源详情页面可以应用相同的筛选项
     Public Loader As LoaderTask(Of ResourceSearcher.SearchRequest, Integer) = ResourceSearcher.GetLoader(AddressOf LoaderInput)
 
+    ''' <summary>
+    ''' 上层的 MyPageRight（PCLPE：允许中间夹一层容器，例如数据包页的 Grid）。
+    ''' </summary>
+    Private ReadOnly Property ParentPage As MyPageRight
+        Get
+            Dim Node As DependencyObject = Me
+            Do While Node IsNot Nothing
+                Dim Page = TryCast(Node, MyPageRight)
+                If Page IsNot Nothing Then Return Page
+                Node = VisualTreeHelper.GetParent(Node)
+            Loop
+            Return Nothing
+        End Get
+    End Property
     Private Sub PageResource_Loaded(sender As Object, e As EventArgs) Handles Me.Loaded
         Static IsFirstLoaded As Boolean = False
         '不知道从 Initialized 改成 Loaded 会不会有问题，但用 Initialized 会导致初始的筛选器修改被覆盖回默认值
@@ -109,7 +123,7 @@ Public Class PageResource
         '加载器初始化
         If IsFirstLoaded Then Return
         IsFirstLoaded = True
-        CType(Parent, MyPageRight).PageLoaderInit(Load, PanLoad, PanContent, PanAlways, Loader, AddressOf Load_OnFinish, AddressOf LoaderInput)
+        ParentPage.PageLoaderInit(Load, PanLoad, PanContent, PanAlways, Loader, AddressOf Load_OnFinish, AddressOf LoaderInput)
         '将最高 Drop 加入筛选
         If AllDrops IsNot Nothing AndAlso AllDrops.First > 250 Then
             Dim HighestVersion As String = McVersion.DropToVersion(AllDrops.First)
@@ -189,7 +203,7 @@ Public Class PageResource
                 If Loader.Error IsNot Nothing Then ErrorMessage = Loader.Error.Message
                 If ErrorMessage.Contains("不是有效的 json 文件") Then
                     Logger.Warn($"下载的{TypeNameSpaced}列表 json 文件损坏，已自动重试")
-                    CType(Parent, MyPageRight).PageLoaderRestart()
+                    ParentPage.PageLoaderRestart()
                 End If
         End Select
     End Sub
